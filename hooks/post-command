@@ -7,12 +7,6 @@ function die() {
   exit 1
 }
 
-# download and install Rover
-curl -sSL https://rover.apollo.dev/nix/v0.1.0 | sh
-
-export PATH=$HOME/.rover/bin:$PATH
-env | grep BUILDKITE_PLUGIN_APOLLO_SUBGRAPH
-
 graphName=$BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_GRAPH_NAME
 environment=$BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_ENVIRONMENT
 echo "Publishing subgraph $graphName to environment $environment"
@@ -35,7 +29,7 @@ for i in $(env | ggrep -oP "BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_\d+
   supergraphVar=BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_${i}_SUPERGRAPH_NAME
   federatedGraphName=${!supergraphVar:"ailo-gateway-${schema}-managed"}
 
-  rover subgraph introspect $url | \
-  rover subgraph publish ${federatedGraphName}@${environment} \
+  docker run -it ailohq/rover subgraph introspect $url | \
+  docker run -it ailohq/rover subgraph publish ${federatedGraphName}@${environment} \
     --name $graphName --schema - --routing-url $url --convert
 done
