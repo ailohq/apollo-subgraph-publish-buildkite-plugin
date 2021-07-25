@@ -25,10 +25,8 @@ for i in $(env | grep -oP "BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_\d+_
   export APOLLO_KEY=${!apolloKeyVar}
 
   echo "Publishing $schema schema from $url"
-  supergraphVar=BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_${i}_SUPERGRAPH_NAME
-  federatedGraphName=${!supergraphVar:"ailo-gateway-${schema}-managed"}
 
-  docker run -it ailohq/rover subgraph introspect $url | \
-  docker run -it ailohq/rover subgraph publish ${federatedGraphName}@${environment} \
+  docker run -i ailohq/rover subgraph introspect $url | \
+  docker run -i -e APOLLO_KEY ailohq/rover subgraph publish ailo-gateway-${schema}-managed@${environment} \
     --name $graphName --schema - --routing-url $url --convert
 done
