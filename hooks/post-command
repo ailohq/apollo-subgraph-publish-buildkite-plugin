@@ -11,8 +11,7 @@ graphName=$BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_GRAPH_NAME
 environment=$BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_ENVIRONMENT
 echo "Publishing subgraph $graphName to environment $environment"
 
-for i in $(env | ggrep -oP "BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_\d+_NAME" | ggrep -oP "(\d+)" ); do
-  echo $i
+for i in $(env | grep -oP "BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_\d+_NAME" | grep -oP "(\d+)" ); do
   schemaNameVar=BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_${i}_NAME
   [ -z ${!schemaNameVar+x} ] && die "${schemaNameVar} is not set"
   schema=${!schemaNameVar}
