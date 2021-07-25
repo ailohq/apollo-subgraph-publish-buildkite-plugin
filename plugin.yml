@@ -1,0 +1,28 @@
+name: Apollo Subgraph Publish plugin
+description: Publishing subgraph schema to apollo
+author: https://github.com/ailohq
+requirements: []
+configuration:
+  definitions:
+    schema-object:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        supergraphName:
+          type: string
+      required:
+        - name
+        - url
+  properties:
+    schemas:
+      type: array
+      items:
+        $ref: '#/definitions/schema-object'
+    graph_name:
+      type: string
+    environment:
+      type: string
+  additionalProperties: true

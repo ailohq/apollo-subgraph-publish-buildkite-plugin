@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -euo pipefail
+
+function die() {
+  echo $1
+  exit 1
+}
+
+# download and install Rover
+curl -sSL https://rover.apollo.dev/nix/v0.1.0 | sh
+
+export PATH=$HOME/.rover/bin:$PATH
+env | grep BUILDKITE_PLUGIN_APOLLO_SUBGRAPH
+
+graphName=$BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_GRAPH_NAME
+environment=$BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_ENVIRONMENT
+echo "Publishing subgraph $graphName to environment $environment"
+
+for i in $(env | ggrep -oP "BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_\d+_NAME" | ggrep -oP "(\d+)" ); do
+  echo $i
+  schemaNameVar=BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_${i}_NAME
+  [ -z ${!schemaNameVar+x} ] && die "${schemaNameVar} is not set"
+  schema=${!schemaNameVar}
+
+  urlVar=BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_${i}_URL
+  [ -z ${!urlVar+x} ] && die "${urlVar} is not set"
+  url=${!urlVar}
+
+  apolloKeyVar=APOLLO_$(echo $schema | tr "[:lower:]" "[:upper:]")_KEY
+  [ -z ${!apolloKeyVar+x} ] && die "${apolloKeyVar} is not set"
+  export APOLLO_KEY=${!apolloKeyVar}
+
+  echo "Publishing $schema schema from $url"
+  supergraphVar=BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_${i}_SUPERGRAPH_NAME
+  federatedGraphName=${!supergraphVar:"ailo-gateway-${schema}-managed"}
+
+  rover subgraph introspect $url | \
+  rover subgraph publish ${federatedGraphName}@${environment} \
+    --name $graphName --schema - --routing-url $url --convert
+done
