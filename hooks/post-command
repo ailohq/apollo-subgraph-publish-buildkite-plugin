@@ -27,6 +27,7 @@ for i in $(env | grep -oP "BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_\d+_
   echo "Publishing $schema schema from $url"
 
   docker run -i ailohq/rover subgraph introspect $url | \
+    grep -v -e '^There is a newer version of Rover' -e 'For instructions on how to install' | \
   docker run -i -e APOLLO_KEY ailohq/rover subgraph publish ailo-gateway-${schema}-managed@${environment} \
     --name $graphName --schema - --routing-url $url --convert
 done
