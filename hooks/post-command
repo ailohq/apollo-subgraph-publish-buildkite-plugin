@@ -6,10 +6,13 @@ function die() {
   echo $1
   exit 1
 }
-
+roverVersion=0.2.1
 graphName=$BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_GRAPH_NAME
 environment=$BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_ENVIRONMENT
+
 echo "Publishing subgraph $graphName to environment $environment"
+
+overallExitCode=0
 
 for i in $(env | grep -oP "BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_\d+_NAME" | grep -oP "(\d+)" ); do
   schemaNameVar=BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_${i}_NAME
@@ -24,10 +27,25 @@ for i in $(env | grep -oP "BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_\d+_
   [ -z ${!apolloKeyVar+x} ] && die "${apolloKeyVar} is not set"
   export APOLLO_KEY=${!apolloKeyVar}
 
+  echo "======================================================================================"
   echo "Publishing $schema schema from $url"
 
-  docker run -i ailohq/rover subgraph introspect $url | \
+  docker run -i ailohq/rover:$roverVersion subgraph introspect $url | \
     grep -v -e '^There is a newer version of Rover' -e 'For instructions on how to install' | \
-  docker run -i -e APOLLO_KEY ailohq/rover subgraph publish ailo-gateway-${schema}-managed@${environment} \
-    --name $graphName --schema - --routing-url $url --convert
+  docker run -i -e APOLLO_KEY ailohq/rover:$roverVersion subgraph publish ailo-gateway-${schema}-managed@${environment} \
+    --name $graphName --schema - --routing-url $url --convert --output json > /tmp/$schema-out.json
+  success=$(cat /tmp/$schema-out.json | jq '.data.success')
+  error=$(cat /tmp/$schema-out.json | jq '.data.error')
+  supergraphWasUpdated=$(cat /tmp/$schema-out.json | jq '.data.supergraph_was_updated')
+  if [[ "$success" != "true" ]]; then
+      echo -e "Update of $schema failed with: \033[31m$error\033[0m"
+      overallExitCode=$((overallExitCode | 1))
+  else
+      echo -e "Update of $schema \033[32msucceeded\033[0m, supergraph $([[ $supergraphWasUpdated = 'true' ]] && echo 'was' ||echo 'was NOT ') updated"
+  fi
+
 done
+
+echo "======================================================================================"
+echo "exit code: $overallExitCode"
+exit $overallExitCode
