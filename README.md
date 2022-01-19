@@ -10,7 +10,7 @@ Add the following to your `pipeline.yml`:
 steps:
   - command: echo 'Update federated schema'
     plugins:
-      - ailohq/apollo-subgraph-publish#v1.1.0:
+      - ailohq/apollo-subgraph-publish#v1.0.0:
           schemas:
             - name: admin
               url: https://authz.dev.ailo.io/admin/graphql

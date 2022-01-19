@@ -42,9 +42,6 @@ for i in $(env | grep -oP "BUILDKITE_PLUGIN_APOLLO_SUBGRAPH_PUBLISH_SCHEMAS_\d+_
       overallExitCode=$((overallExitCode | 1))
   else
       echo -e "Update of $schema \033[32msucceeded\033[0m, supergraph $([[ $supergraphWasUpdated = 'true' ]] && echo 'was' ||echo 'was NOT ') updated"
-      if [[ $supergraphWasUpdated != "true" ]]; then
-          overallExitCode=$((overallExitCode | 1))
-      fi
   fi
 
 done
